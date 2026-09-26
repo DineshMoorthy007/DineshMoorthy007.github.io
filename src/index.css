@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --scroll-bg: #FAFCFF;
+    --scroll-glow-x: 20%;
+    --bg-page: #FAFCFF;
+    --text-primary: #111827;
+    --text-secondary: #5B6472;
+    --border-light: #E5E7EB;
+    --accent-blue: #5B8DEF;
+    --accent-mint: #38CFA3;
+    --accent-violet: #8B7CF6;
+    --accent-orange: #FF9F43;
+    --accent-pink: #F472B6;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--scroll-bg);
+    color: #111827;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+.scroll-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--scroll-bg);
+  overflow: hidden;
+  transition: background-color 180ms linear;
+}
+
+.scroll-background::before,
+.scroll-background::after {
+  content: '';
+  position: absolute;
+  width: 72vw;
+  height: 58vh;
+  border-radius: 50%;
+  filter: blur(42px);
+  opacity: 0.52;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.scroll-background::before {
+  top: -22%;
+  left: calc(var(--scroll-glow-x) - 28%);
+  background: radial-gradient(ellipse, rgba(191, 219, 254, 0.82) 0%, rgba(187, 247, 208, 0.42) 42%, transparent 72%);
+  animation: cloud-drift 24s ease-in-out infinite alternate;
+  transition: left 500ms ease-out;
+}
+
+.scroll-background::after {
+  right: -28%;
+  bottom: -25%;
+  background: radial-gradient(ellipse, rgba(221, 214, 254, 0.74) 0%, rgba(254, 240, 138, 0.26) 44%, transparent 72%);
+  animation: cloud-drift-reverse 30s ease-in-out infinite alternate;
+}
+
+@keyframes cloud-drift {
+  from { transform: translate3d(-2%, 0, 0) scale(1); }
+  to { transform: translate3d(4%, 5%, 0) scale(1.08); }
+}
+
+@keyframes cloud-drift-reverse {
+  from { transform: translate3d(2%, -2%, 0) scale(1.04); }
+  to { transform: translate3d(-4%, 3%, 0) scale(0.96); }
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom focus ring */
+:focus-visible {
+  outline: 2px solid #5B8DEF;
+  outline-offset: 2px;
+}
+
+/* Subtle pulse glow */
+@keyframes subtle-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.75;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: subtle-pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Subtle marquee */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 28s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-marquee {
+    animation: none !important;
+    transform: none !important;
+  }
+  .scroll-background {
+    transition: none !important;
+  }
+  .scroll-background::before,
+  .scroll-background::after {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .scroll-background::before,
+  .scroll-background::after {
+    width: 120vw;
+    height: 48vh;
+    filter: blur(34px);
+    opacity: 0.3;
+  }
+}
