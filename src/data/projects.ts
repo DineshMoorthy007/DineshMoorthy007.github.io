@@ -220,5 +220,13 @@ export const secondaryProjects: SecondaryProject[] = [
     category: "AI / ML",
     description: "Reinforcement learning agent trained with Q-learning and policy gradients in a discrete 2D grid world environment.",
     technologies: ["Python", "PyTorch", "Gymnasium"]
+  },
+  {
+    id: "qubo-optimization-from-scratch",
+    title: "QUBO Optimization from Scratch",
+    category: "QUANTUM",
+    description: "From-scratch implementation of Quadratic Unconstrained Binary Optimization for exploring quantum-inspired optimization problems.",
+    technologies: ["Python", "QUBO", "Optimization", "Quantum Computing"],
+    github: "https://github.com/DineshMoorthy007/qubo-optimization-from-scratch"
   }
 ];

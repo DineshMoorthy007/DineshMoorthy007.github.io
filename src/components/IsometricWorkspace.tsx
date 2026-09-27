@@ -510,6 +510,12 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
       metalness: 0.85,
     });
 
+    const mouseMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,
+      roughness: 0.55,
+      metalness: 0.15,
+    });
+
     const potMat = new THREE.MeshStandardMaterial({
       color: 0xd97706,
       roughness: 0.5,
@@ -572,8 +578,8 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
     // 2. THE LAPTOP (Prominent Display with 2048x1280 Texture)
     // ========================================================
     const laptopGroup = new THREE.Group();
-    laptopGroup.position.set(0.35, 0.76, 0.35);
-    laptopGroup.rotation.y = -0.04;
+    laptopGroup.position.set(0.4, 0.76, 0.32);
+    laptopGroup.rotation.y = -0.065;
     workspaceGroup.add(laptopGroup);
 
     // Enlarged laptop base to make screen prominent
@@ -628,7 +634,8 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
     // 3. EXTERNAL MONITOR (Enlarged 2048x1280 Display)
     // ========================================================
     const monitorGroup = new THREE.Group();
-    monitorGroup.position.set(-1.05, 0.76, -0.28);
+    // monitorGroup.position.set(-1.05, 0.76, -0.28);
+    monitorGroup.position.set(-1.15, 0.76, -0.28);
     monitorGroup.rotation.y = 0.12;
     monitorGroup.rotation.x = 0.08;
     workspaceGroup.add(monitorGroup);
@@ -671,14 +678,32 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
     // 4. DESK ACCESSORIES
     // ========================================================
     const extKeyboard = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.025, 0.35), darkMetalMat);
-    extKeyboard.position.set(-1.05, 0.77, 0.4);
+    // extKeyboard.position.set(-1.05, 0.77, 0.4);
+    extKeyboard.position.set(-1.15, 0.77, 0.42);
+    extKeyboard.rotation.y = Math.PI / 24;
     extKeyboard.castShadow = true;
     workspaceGroup.add(extKeyboard);
 
-    const mouseMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.05, 0.28), silverAluminumMat);
-    mouseMesh.position.set(1.4, 0.78, 0.4);
+    const mouseGroup = new THREE.Group();
+    mouseGroup.position.set(1.52, 0.78, 0.60);
+
+    const mouseMesh = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), mouseMat);
+    mouseMesh.scale.set(0.1, 0.06, 0.15);
+    mouseMesh.position.y = 0.05;
+    mouseMesh.rotation.x = 0.12;
     mouseMesh.castShadow = true;
-    workspaceGroup.add(mouseMesh);
+    mouseGroup.add(mouseMesh);
+
+    const mouseWheel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.025, 0.025, 0.025, 12),
+      darkMetalMat
+    );
+    mouseWheel.rotation.z = Math.PI / 2;
+    mouseWheel.position.set(0, 0.115, 0.015);
+    mouseWheel.castShadow = true;
+    mouseGroup.add(mouseWheel);
+
+    workspaceGroup.add(mouseGroup);
 
     // Coffee Mug with steam
     const coffeeGroup = new THREE.Group();
@@ -699,15 +724,41 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
     mugHandle.rotation.y = Math.PI / 2;
     coffeeGroup.add(mugHandle);
 
-    const steamPuffs: Array<{ mesh: THREE.Mesh; speed: number; phase: number }> = [];
-    for (let i = 0; i < 4; i++) {
+    // Dynamic coffee steam
+    const steamPuffs: Array<{
+      mesh: THREE.Mesh;
+      speed: number;
+      phase: number;
+      drift: number;
+    }> = [];
+
+    for (let i = 0; i < 6; i++) {
+      const steamMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.18,
+        depthWrite: false,
+      });
+
       const puff = new THREE.Mesh(
-        new THREE.SphereGeometry(0.04, 12, 12),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 })
+        new THREE.SphereGeometry(0.035 + (i % 2) * 0.012, 10, 10),
+        steamMaterial
       );
-      puff.position.set(0, 0.3 + i * 0.12, 0);
+
+      puff.position.set(
+        (i - 2.5) * 0.025,
+        0.30 + i * 0.055,
+        0
+      );
+
       coffeeGroup.add(puff);
-      steamPuffs.push({ mesh: puff, speed: 0.4 + i * 0.15, phase: i * 1.5 });
+
+      steamPuffs.push({
+        mesh: puff,
+        speed: 0.28 + (i % 3) * 0.08,
+        phase: i * 0.7,
+        drift: 0.035 + (i % 2) * 0.02,
+      });
     }
 
     // Desk Plant on the left
@@ -807,7 +858,7 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
           y: (1 - uv.y) * 1280,
           isOver: true,
         };
-        container.style.cursor = 'crosshair';
+        container.style.cursor = 'none';
         setHoveredObject('CODE EDITOR · CLICK TO RUN');
       } else {
         screenCursorRef.current.isOver = false;
@@ -844,6 +895,20 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
       // Check click on Laptop Screen
       const screenIntersects = raycaster.intersectObject(screenDisplay, false);
       if (screenIntersects.length > 0) {
+        const uv = screenIntersects[0].uv;
+        if (uv) {
+          const screenX = uv.x * 2048;
+          const screenY = (1 - uv.y) * 1280;
+          const tabStartX = 210;
+          const tabWidth = 335;
+          const tabIndex = Math.floor((screenX - tabStartX) / tabWidth);
+          const laptopTabs: EditorFile[] = ['recruiter_summary.json', 'AIVidya.py', 'BB84_qkd.py', 'QuickNote.go'];
+
+          if (screenY >= 18 && screenY <= 96 && screenX >= tabStartX && tabIndex < laptopTabs.length) {
+            handleSelectFile(laptopTabs[tabIndex]);
+            return;
+          }
+        }
         handleRunCode();
         return;
       }
@@ -963,15 +1028,28 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
       laptopCtx.arc(155, 58, 16, 0, Math.PI * 2);
       laptopCtx.fill();
 
-      // Active File Pill
-      laptopCtx.fillStyle = '#1E293B';
-      laptopCtx.beginPath();
-      laptopCtx.roundRect(210, 20, 680, 75, 12);
-      laptopCtx.fill();
-
-      laptopCtx.font = 'bold 42px "JetBrains Mono", monospace';
-      laptopCtx.fillStyle = fileKey === 'recruiter_summary.json' ? '#FDE047' : '#38BDF8';
-      laptopCtx.fillText(`📁 ${fileKey}`, 240, 72);
+      // Clickable project tabs in the upper editor bar.
+      const laptopTabs: Array<{ file: EditorFile; label: string }> = [
+        { file: 'recruiter_summary.json', label: 'RECRUITER' },
+        { file: 'AIVidya.py', label: 'AI VIDYA' },
+        { file: 'BB84_qkd.py', label: 'BB84 QKD' },
+        { file: 'QuickNote.go', label: 'QUICK-NOTE' },
+      ];
+      const tabStartX = 210;
+      const tabWidth = 335;
+      laptopTabs.forEach((tab, index) => {
+        const isActive = tab.file === fileKey;
+        const tabX = tabStartX + index * tabWidth;
+        laptopCtx.fillStyle = isActive ? '#1E293B' : '#111827';
+        laptopCtx.beginPath();
+        laptopCtx.roundRect(tabX, 18, tabWidth - 10, 78, 12);
+        laptopCtx.fill();
+        laptopCtx.font = 'bold 30px "JetBrains Mono", monospace';
+        laptopCtx.fillStyle = isActive
+          ? tab.file === 'recruiter_summary.json' ? '#FDE047' : '#38BDF8'
+          : '#94A3B8';
+        laptopCtx.fillText(tab.label, tabX + 22, 66);
+      });
 
       // Status indicator on right of titlebar
       laptopCtx.font = 'bold 38px "JetBrains Mono", monospace';
@@ -1076,7 +1154,54 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
 
       monitorCtx.font = 'bold 54px "JetBrains Mono", monospace';
       monitorCtx.fillStyle = '#38BDF8';
-      monitorCtx.fillText('DINESH MOORTHY — SYSTEMS & AI', 65, 88);
+      const monitorViews: Record<string, {
+        project: string;
+        role: string;
+        status: string;
+        metric: string;
+        accent: string;
+        rows: Array<{ label: string; value: string }>;
+      }> = {
+        SERVICES: {
+          project: 'AI VIDYA FOR BHARAT',
+          role: 'MULTILINGUAL NLP LEARNING PLATFORM',
+          status: 'ONLINE',
+          metric: '38ms RESPONSE',
+          accent: '#10B981',
+          rows: [
+            { label: 'LANGUAGE ROUTER', value: 'Tamil · Hindi · Telugu · English' },
+            { label: 'SPEECH ENGINE', value: 'Text-to-speech · Accessible learning' },
+            { label: 'MODEL PIPELINE', value: 'Indic NLP · Context-aware answers' },
+          ],
+        },
+        ARCHITECTURE: {
+          project: 'BB84 QUANTUM KEY DIST.',
+          role: 'QUANTUM CRYPTOGRAPHY SIMULATOR',
+          status: 'SECURE',
+          metric: '0.00% QBER',
+          accent: '#C084FC',
+          rows: [
+            { label: 'ALICE', value: 'Random bit and basis preparation' },
+            { label: 'QUANTUM CHANNEL', value: 'State transmission · Eve detection' },
+            { label: 'BOB', value: 'Measurement · Basis reconciliation' },
+          ],
+        },
+        LATENCY: {
+          project: 'QUICK-NOTE POLYGLOT',
+          role: 'REAL-TIME POLYGLOT SYNC HUB',
+          status: 'STABLE',
+          metric: '<2ms SYNC',
+          accent: '#38BDF8',
+          rows: [
+            { label: 'REACT CLIENT', value: 'Optimistic state · Offline cache' },
+            { label: 'SERVICE ROUTING', value: 'Go · Node.js · Python APIs' },
+            { label: 'PERSISTENCE', value: 'Firebase · Firestore · Dual-write safety' },
+          ],
+        },
+      };
+      const view = monitorViews[mode] ?? monitorViews.SERVICES;
+
+      monitorCtx.fillText(view.project, 65, 88);
 
       monitorCtx.fillStyle = '#10B981';
       monitorCtx.beginPath();
@@ -1087,55 +1212,87 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
       monitorCtx.font = 'bold 44px "JetBrains Mono", monospace';
       monitorCtx.fillText('LIVE', 1900, 90);
 
-      // 3 High-Impact, Spacious System Cards
-      const services = [
-        {
-          name: 'AI VIDYA FOR BHARAT',
-          role: 'Multilingual NLP API · FastAPI & PyTorch Pipelines',
-          status: 'ONLINE',
-          load: '38ms',
-          color: '#10B981',
-          y: 190,
-        },
-        {
-          name: 'BB84 QUANTUM KEY DIST.',
-          role: 'Quantum Cryptography · Qiskit Statevector Simulator',
-          status: 'ACTIVE',
-          load: '100% Sift',
-          color: '#C084FC',
-          y: 535,
-        },
-        {
-          name: 'QUICK-NOTE POLYGLOT',
-          role: 'Go Microservices + React 19 Real-Time Sync Hub',
-          status: 'READY',
-          load: '<2ms Sync',
-          color: '#38BDF8',
-          y: 880,
-        },
-      ];
-
-      services.forEach((s) => {
-        monitorCtx.fillStyle = '#0F172A';
-        monitorCtx.fillRect(60, s.y, 1928, 280);
-        monitorCtx.strokeStyle = '#1E293B';
-        monitorCtx.lineWidth = 4;
-        monitorCtx.strokeRect(60, s.y, 1928, 280);
-
-        monitorCtx.font = 'bold 54px "JetBrains Mono", monospace';
-        monitorCtx.fillStyle = '#FFFFFF';
-        monitorCtx.fillText(s.name, 110, s.y + 110);
-
-        monitorCtx.font = '40px "JetBrains Mono", monospace';
-        monitorCtx.fillStyle = '#94A3B8';
-        monitorCtx.fillText(s.role, 110, s.y + 195);
-
-        monitorCtx.fillStyle = s.color;
-        monitorCtx.font = 'bold 46px "JetBrains Mono", monospace';
-        monitorCtx.textAlign = 'right';
-        monitorCtx.fillText(`● ${s.status} [${s.load}]`, 1900, s.y + 150);
+      const panelX = 60;
+      const panelY = 190;
+      const panelWidth = 1928;
+      const panelHeight = 900;
+      const drawFittedText = (text: string, x: number, y: number, maxWidth: number, size: number, color: string, align: CanvasTextAlign = 'left') => {
+        let fontSize = size;
+        monitorCtx.textAlign = align;
+        monitorCtx.font = `bold ${fontSize}px "JetBrains Mono", monospace`;
+        while (monitorCtx.measureText(text).width > maxWidth && fontSize > 18) {
+          fontSize -= 2;
+          monitorCtx.font = `bold ${fontSize}px "JetBrains Mono", monospace`;
+        }
+        monitorCtx.fillStyle = color;
+        monitorCtx.fillText(text, x, y);
         monitorCtx.textAlign = 'left';
-      });
+      };
+      monitorCtx.fillStyle = '#0F172A';
+      monitorCtx.fillRect(panelX, panelY, panelWidth, panelHeight);
+      monitorCtx.strokeStyle = '#1E293B';
+      monitorCtx.lineWidth = 4;
+      monitorCtx.strokeRect(panelX, panelY, panelWidth, panelHeight);
+      monitorCtx.font = 'bold 66px "JetBrains Mono", monospace';
+      monitorCtx.fillStyle = '#E2E8F0';
+      monitorCtx.fillText(view.project, 120, 315);
+      monitorCtx.font = '38px "JetBrains Mono", monospace';
+      monitorCtx.fillStyle = '#94A3B8';
+      monitorCtx.fillText(view.role, 120, 385);
+      monitorCtx.fillStyle = view.accent;
+      monitorCtx.font = 'bold 46px "JetBrains Mono", monospace';
+      monitorCtx.fillText(`● ${view.status}`, 120, 510);
+      monitorCtx.textAlign = 'right';
+      monitorCtx.fillText(view.metric, 1900, 510);
+      monitorCtx.textAlign = 'left';
+      if (mode === 'SERVICES') {
+        view.rows.forEach((row, index) => {
+          const y = 625 + index * 135;
+          const x = index % 2 === 0 ? 120 : 990;
+          monitorCtx.fillStyle = index % 2 === 0 ? '#172554' : '#132E3A';
+          monitorCtx.fillRect(x, y - 62, 800, 92);
+          drawFittedText(row.label, x + 28, y - 22, 740, 30, view.accent);
+          drawFittedText(row.value, x + 28, y + 12, 740, 26, '#CBD5E1');
+        });
+      } else if (mode === 'ARCHITECTURE') {
+        const nodeY = 665;
+        monitorCtx.strokeStyle = '#475569';
+        monitorCtx.lineWidth = 8;
+        monitorCtx.beginPath();
+        monitorCtx.moveTo(300, nodeY);
+        monitorCtx.lineTo(1740, nodeY);
+        monitorCtx.stroke();
+        view.rows.forEach((row, index) => {
+          const x = 300 + index * 720;
+          monitorCtx.fillStyle = view.accent;
+          monitorCtx.beginPath();
+          monitorCtx.arc(x, nodeY, 38, 0, Math.PI * 2);
+          monitorCtx.fill();
+          drawFittedText(row.label, x, nodeY + 110, 500, 30, '#E2E8F0', 'center');
+          drawFittedText(row.value, x, nodeY + 160, 500, 24, '#94A3B8', 'center');
+        });
+        monitorCtx.fillStyle = '#111827';
+        monitorCtx.fillRect(120, 940, 1780, 90);
+        monitorCtx.strokeStyle = '#334155';
+        monitorCtx.strokeRect(120, 940, 1780, 90);
+        drawFittedText('SIFTED KEY  ·  1011 0010 1101 0110 1001 1110 0101 0011  ·  QBER 0.00%  ·  SECURE', 155, 995, 1700, 28, '#CBD5E1');
+        monitorCtx.textAlign = 'left';
+      } else {
+        view.rows.forEach((row, index) => {
+          const x = 120 + index * 600;
+          monitorCtx.fillStyle = '#132E3A';
+          monitorCtx.fillRect(x, 650, 500, 260);
+          monitorCtx.strokeStyle = view.accent;
+          monitorCtx.lineWidth = 3;
+          monitorCtx.strokeRect(x, 650, 500, 260);
+          drawFittedText(row.label, x + 28, 720, 440, 30, view.accent);
+          drawFittedText(row.value, x + 28, 790, 440, 28, '#CBD5E1');
+          monitorCtx.fillStyle = '#64748B';
+          monitorCtx.fillRect(x + 28, 845, 420, 10);
+          monitorCtx.fillStyle = view.accent;
+          monitorCtx.fillRect(x + 28, 845, 280 + index * 55, 10);
+        });
+      }
 
       monitorTexture.needsUpdate = true;
     };
@@ -1162,11 +1319,18 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
       renderMonitorScreen(elapsed, monitorModeRef.current);
 
       steamPuffs.forEach((puff, idx) => {
-        const t = (elapsed * puff.speed + puff.phase) % 2.0;
-        puff.mesh.position.y = 0.28 + t * 0.24;
-        puff.mesh.position.x = Math.sin(t * 3.0 + idx) * 0.02;
+        const t = (elapsed * puff.speed + puff.phase) % 2.4;
+        puff.mesh.position.y = 0.28 + t * 0.25;
+        puff.mesh.position.x =
+          Math.sin(elapsed * 1.8 + idx * 1.2) * puff.drift;
+        puff.mesh.position.z =
+          Math.cos(elapsed * 1.4 + idx) * 0.015;
+        const scale = 0.7 + t * 0.35;
+        puff.mesh.scale.set(scale, scale, scale);
+        const fadeIn = Math.min(t / 0.35, 1);
+        const fadeOut = Math.max(0, 1 - (t - 1.3) / 1.1);
         const mat = puff.mesh.material as THREE.MeshBasicMaterial;
-        mat.opacity = Math.max(0, 0.3 * (1 - t / 2.0));
+        mat.opacity = 0.20 * fadeIn * fadeOut;
       });
 
       plantLeaves.forEach((leaf, idx) => {
@@ -1257,7 +1421,7 @@ export const IsometricWorkspace: React.FC<IsometricWorkspaceProps> = ({ onSelect
       <div className="relative z-10 p-3 sm:p-4 flex items-center justify-between pointer-events-none">
         <div className="px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-xs border border-slate-200/80 shadow-2xs flex items-center gap-2">
           <span className="text-xs font-mono font-bold tracking-tight text-slate-900">
-            {activeFile} · {buildStatus === 'RUNNING' ? 'VALIDATING...' : 'READY'}
+            {activeFile}
           </span>
           {isInteracting && (
             <span className="text-[10px] font-mono text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
