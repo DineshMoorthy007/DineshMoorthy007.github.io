@@ -2,13 +2,13 @@ import React, { useEffect } from 'react';
 
 const stops = [
   { id: 'hero', color: '#FAFCFF' },
-  { id: 'work', color: '#E8F1FF' },
-  { id: 'achievements', color: '#D8E7F7' },
-  { id: 'experiments', color: '#FFF6D9' },
-  { id: 'toolkit', color: '#E4EEFC' },
-  { id: 'research', color: '#EDE8FF' },
+  { id: 'work', color: '#D8E8FC' },
+  { id: 'achievements', color: '#BED3EA' },
+  { id: 'experiments', color: '#FFEFBF' },
+  { id: 'toolkit', color: '#C9DDF5' },
+  { id: 'research', color: '#DDD5FA' },
   { id: 'about', color: '#FFFFFF' },
-  { id: 'contact', color: '#DDEEFF' },
+  { id: 'contact', color: '#C5E1FA' },
 ];
 
 const clamp = (value: number) => Math.min(1, Math.max(0, value));

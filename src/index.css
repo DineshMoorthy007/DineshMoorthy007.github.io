@@ -50,7 +50,7 @@
   height: 58vh;
   border-radius: 50%;
   filter: blur(42px);
-  opacity: 0.52;
+  opacity: 0.6;
   pointer-events: none;
   will-change: transform;
 }

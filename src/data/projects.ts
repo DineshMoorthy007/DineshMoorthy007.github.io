@@ -228,5 +228,13 @@ export const secondaryProjects: SecondaryProject[] = [
     description: "From-scratch implementation of Quadratic Unconstrained Binary Optimization for exploring quantum-inspired optimization problems.",
     technologies: ["Python", "QUBO", "Optimization", "Quantum Computing"],
     github: "https://github.com/DineshMoorthy007/qubo-optimization-from-scratch"
+  },
+  {
+    id: "energy-grid-ai",
+    title: "Energy Grid AI",
+    category: "QUANTUM",
+    description: "AI-driven energy grid optimization project exploring intelligent scheduling and efficient power distribution.",
+    technologies: ["Python", "AI", "QML", "Quantum Computing"],
+    github: "https://github.com/DineshMoorthy007/energy-grid-ai"
   }
 ];
